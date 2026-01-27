@@ -1,0 +1,1 @@
+# ponto_loja_gps
