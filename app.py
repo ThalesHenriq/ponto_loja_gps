@@ -94,6 +94,8 @@ if usuario:
                 st.success(f"Ponto de {tipo} registrado!")
             
             if c1.button("🚀 ENTRADA", use_container_width=True): salvar("Entrada")
+            if c1.button("☕ SAÍDA ALMOÇO", use_container_width=True): salvar("Saída Almoço")
+            if c2.button("🍱 VOLTA ALMOÇO", use_container_width=True): salvar("Volta Almoço")
             if c2.button("🏠 SAÍDA", use_container_width=True): salvar("Saída Final")
 
 # --- PAINEL DO GERENTE ---
