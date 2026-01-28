@@ -5,3 +5,4 @@ pytz
 Pillow
 geopy
 streamlit-js-eval
+requests
