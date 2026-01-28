@@ -123,7 +123,60 @@ with st.sidebar:
                 conn.close()
                 st.rerun()
 
-        # Botões de Relatório e Fotos (Mesmos dos códigos anteriores)
-        if st.button("Gerar Planilha Excel"):
-             # [Inserir aqui a lógica de exportação que já criamos]
-             st.write("Planilha enviada para download.")
+        # ABA: CADASTRAR
+        st.divider()
+        st.subheader("👤 Gestão de Equipe")
+        novo_nome = st.text_input("Nome Completo")
+        if st.button("Cadastrar Funcionário"):
+            if novo_nome:
+                conn = abrir_conexao()
+                try:
+                    conn.execute("INSERT INTO funcionarios (nome) VALUES (?)", (novo_nome,))
+                    conn.commit()
+                    st.success("Cadastrado!")
+                    st.rerun()
+                except: st.error("Erro: Nome já existe.")
+                finally: conn.close()
+                        # ABA: RELATÓRIOS
+        st.divider()
+        st.subheader("📊 Espelho de Ponto")
+        if st.button("Gerar Relatório Excel"):
+            conn = abrir_conexao()
+            df = pd.read_sql_query("SELECT funcionario, tipo, data_iso, data_hora FROM registros", conn)
+            conn.close()
+            if not df.empty:
+                df['data_hora'] = pd.to_datetime(df['data_hora'], format='%d/%m/%Y %H:%M:%S')
+                espelho = df.pivot_table(index=['funcionario', 'data_iso'], columns='tipo', values='data_hora', aggfunc='first').reset_index()
+                
+                # Cálculo de Horas Extras
+                for col in ['Entrada', 'Saída Almoço', 'Volta Almoço', 'Saída Final']:
+                    if col not in espelho: espelho[col] = pd.NaT
+
+                def calc_horas(row):
+                    try:
+                        manha = (row['Saída Almoço'] - row['Entrada']).total_seconds() / 3600
+                        tarde = (row['Saída Final'] - row['Volta Almoço']).total_seconds() / 3600
+                        total = manha + tarde
+                        extra = max(0, total - 8.0)
+                        return pd.Series([round(total, 2), round(extra, 2)])
+                    except: return pd.Series([0.0, 0.0])
+
+                espelho[['Total Horas', 'Horas Extras']] = espelho.apply(calc_horas, axis=1)
+                
+                output = io.BytesIO()
+                espelho.to_excel(output, index=False)
+                st.download_button("⬇️ Baixar Planilha (.xlsx)", data=output.getvalue(), file_name="relatorio_orbtech.xlsx")
+            else: st.info("Sem dados.")
+
+        # ABA: FOTOS
+        st.divider()
+        st.subheader("📸 Auditoria Visual")
+        if st.button("Ver Últimas Fotos"):
+            conn = abrir_conexao()
+            fotos_df = pd.read_sql_query("SELECT funcionario, tipo, data_hora, foto FROM registros ORDER BY id DESC LIMIT 5", conn)
+            conn.close()
+            for _, row in fotos_df.iterrows():
+                st.write(f"*{row['funcionario']}* ({row['tipo']})")
+                st.caption(row['data_hora'])
+                if row['foto']: st.image(row['foto'], width=150)
+                st.divider()
