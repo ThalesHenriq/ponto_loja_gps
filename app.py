@@ -140,8 +140,32 @@ with st.sidebar:
                 conn.commit()
                 conn.close()
                 st.rerun()
+        # 2. Gerenciar Equipe (ADICIONADO)
+        with st.expander("👤 Gerenciar Equipe"):
+            st.subheader("Novo Colaborador")
+            novo_f = st.text_input("Nome Completo do Funcionário", key="add_func")
+            if st.button("Cadastrar na OrbTech"):
+                if novo_f:
+                    try:
+                        conn = abrir_conexao()
+                        conn.execute("INSERT INTO funcionarios (nome) VALUES (?)", (novo_f,))
+                        conn.commit()
+                        conn.close()
+                        st.success(f"{novo_f} cadastrado com sucesso!")
+                        st.rerun()
+                    except:
+                        st.error("Este nome já existe no sistema.")
+                else:
+                    st.warning("Digite um nome válido.")
+            
+            st.divider()
+            st.subheader("Lista de Ativos")
+            conn = abrir_conexao()
+            lista_atual = pd.read_sql_query("SELECT nome FROM funcionarios ORDER BY nome", conn)
+            conn.close()
+            st.dataframe(lista_atual, use_container_width=True, hide_index=True)
 
-        # 2. Relatórios
+        # 3. Relatórios
         with st.expander("📊 Relatório Excel"):
             if st.button("Gerar Espelho de Ponto"):
                 conn = abrir_conexao()
@@ -160,7 +184,7 @@ with st.sidebar:
                     
                     st.download_button("⬇️ Baixar Planilha", output.getvalue(), f"ponto_{conf['nome_empresa']}.xlsx")
 
-        # 3. Auditoria Visual
+        # 4. Auditoria Visual
         with st.expander("📸 Ver Fotos"):
             conn = abrir_conexao()
             fotos = pd.read_sql_query("SELECT funcionario, tipo, data_hora, foto FROM registros ORDER BY id DESC LIMIT 5", conn)
