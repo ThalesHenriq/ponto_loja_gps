@@ -93,40 +93,6 @@ if usuario:
                 conn.close()
                 st.success(f"Ponto de {tipo} registrado!")
 
-            # --- LÓGICA DE TRAVA DE DUPLICIDADE ---
-def verificar_batida_hoje(nome, tipo):
-    conn = abrir_conexao()
-    fuso = pytz.timezone('America/Sao_Paulo')
-    hoje_iso = datetime.now(fuso).date().isoformat()
-    
-    # Busca se já existe esse tipo de batida para o funcionário hoje
-    query = "SELECT COUNT(*) FROM registros WHERE funcionario = ? AND tipo = ? AND data_iso = ?"
-    ja_bateu = conn.execute(query, (nome, tipo, hoje_iso)).fetchone()[0]
-    conn.close()
-    return ja_bateu > 0
-
-# --- NA INTERFACE ---
-if autorizado:
-    foto = st.camera_input("Foto de Verificação")
-    if foto:
-        st.write("### Escolha sua marcação:")
-        c1, c2 = st.columns(2)
-        
-        # Só mostra o botão se ele NÃO bateu esse ponto hoje
-        if not verificar_batida_hoje(usuario, "Entrada"):
-            if c1.button("🚀 ENTRADA", use_container_width=True): 
-                salvar("Entrada")
-                st.rerun()
-        else:
-            c1.warning("✅ Entrada já registrada hoje.")
-
-        if not verificar_batida_hoje(usuario, "Saída Final"):
-            if c2.button("🏠 SAÍDA", use_container_width=True): 
-                salvar("Saída Final")
-                st.rerun()
-        else:
-            c2.warning("✅ Saída já registrada hoje.")
-
             if c1.button("🚀 ENTRADA", use_container_width=True): salvar("Entrada")
             if c1.button("☕ SAÍDA ALMOÇO", use_container_width=True): salvar("Saída Almoço")
             if c2.button("🍱 VOLTA ALMOÇO", use_container_width=True): salvar("Volta Almoço")
