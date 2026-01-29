@@ -83,9 +83,12 @@ if usuario:
         if foto:
             c1, c2 = st.columns(2)
             agora = datetime.now(pytz.timezone('America/Sao_Paulo'))
-            
             def salvar(tipo):
-                conn = abrir_conexao()
+    if verificar_batida_hoje(usuario, tipo):
+        st.error(f"Erro: Você já registrou sua {tipo} hoje!")
+        return
+
+    conn = abrir_conexao ()
                 img_bin = io.BytesIO(foto.getvalue()).getvalue()
                 conn.execute("INSERT INTO registros (funcionario, tipo, data_hora, data_iso, foto) VALUES (?,?,?,?,?)",
                              (usuario, tipo, agora.strftime("%d/%m/%Y %H:%M:%S"), agora.date().isoformat(), img_bin))
